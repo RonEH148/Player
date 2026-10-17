@@ -1,0 +1,39 @@
+name: Build Just Player URL
+
+on:
+  push:
+    branches: [master]
+    paths: ['url-v*.zip', '.github/workflows/build-url.yml']
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Apply newest Just Player URL changes
+        run: |
+          ZIP=$(ls url-v*.zip | sort -V | tail -1)
+          echo "Using $ZIP"
+          unzip -o "$ZIP" -d .
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build (tablet + TV)
+        run: bash tools/ci.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JustPlayer-URL-Tablet
+          path: out/JustPlayer-URL-Tablet.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JustPlayer-URL-TV
+          path: out/JustPlayer-URL-TV.apk
