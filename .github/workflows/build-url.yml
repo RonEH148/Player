@@ -6,6 +6,9 @@ on:
     paths: ['url-v*.zip', '.github/workflows/build-url.yml']
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   apk:
     runs-on: ubuntu-latest
@@ -37,3 +40,8 @@ jobs:
         with:
           name: JustPlayer-URL-TV
           path: out/JustPlayer-URL-TV.apk
+
+      - name: Publish for in-app updates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash tools/release.sh
