@@ -1,0 +1,59 @@
+name: Build LeanKeyboard Plus
+
+on:
+  push:
+    branches: [master]
+    paths: ['leankey-v*.zip', '.github/workflows/build-leankey.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get LeanKeyboard source and apply LeanKey Plus changes
+        run: |
+          git clone -q https://github.com/yuliskov/LeanKeyKeyboard.git lk
+          git -C lk checkout -q abe39bd25889ea9006402273b36db9bdf38c05e4
+          ZIP=$(ls leankey-v*.zip | sort -V | tail -1)
+          echo "Using $ZIP"
+          unzip -o "$ZIP" -d lk
+
+      - name: Version number from the build number (so every build is an update)
+        id: ver
+        run: |
+          VC=$((1000 + ${{ github.run_number }}))
+          sed -i -E "s/versionCode [0-9]+/versionCode $VC/" lk/leankeykeyboard/build.gradle
+          echo "vc=$VC" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build
+        run: |
+          cd lk
+          chmod +x gradlew
+          ./gradlew :leankeykeyboard:assembleOriginRelease --stacktrace
+          mkdir -p ../out
+          cp $(find leankeykeyboard/build/outputs/apk -name "*origin*.apk" | head -1) ../out/LeanKeyboard-Plus-${{ steps.ver.outputs.vc }}.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LeanKeyboard-Plus
+          path: out/*.apk
+
+      - name: Publish (the keyboard's "Check for updates" reads this)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: leankey-v${{ steps.ver.outputs.vc }}
+          name: LeanKeyboard Plus build ${{ steps.ver.outputs.vc }}
+          body: Install LeanKeyboard-Plus-${{ steps.ver.outputs.vc }}.apk (or use Check for updates in the keyboard's settings).
+          files: out/*.apk
+          make_latest: false
