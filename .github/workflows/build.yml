@@ -1,0 +1,76 @@
+name: Build Lumen and Wisp
+# Builds both apps from sofabrowse-source.zip and publishes each as its own release:
+#   Lumen-<versionCode>.apk  (TV, tag lumen-v…)   and   Wisp-<wispVersionCode>.apk  (phone, tag wisp-v…)
+# Each app updates itself only from its own releases. Run it by hand (Actions → Run workflow) to
+# build just one of them.
+on:
+  push:
+    paths: ['sofabrowse-source.zip', '.github/workflows/build.yml']
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: 'Which apps to build'
+        type: choice
+        options: [both, lumen, wisp]
+        default: both
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      APPS: ${{ github.event.inputs.apps || 'both' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Is the source zip there?
+        id: check
+        run: |
+          if [ -f sofabrowse-source.zip ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::sofabrowse-source.zip isn't in the repository yet - nothing to build. Upload it to start a build."; fi
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.ok == 'true'
+        with: { java-version: '21', distribution: 'temurin' }
+      - name: Unpack the source
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          unzip -q sofabrowse-source.zip -d src
+          chmod +x src/sofabrowse/gradlew
+          mkdir -p out-lumen out-wisp
+
+      # ---------------- Lumen (TV) ----------------
+      - name: Build Lumen
+        if: steps.check.outputs.ok == 'true' && env.APPS != 'wisp'
+        id: lumen
+        run: |
+          cd src/sofabrowse
+          ./gradlew assembleFossGeckoExcludedRelease
+          VC=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | head -1 | grep -oE '[0-9]+')
+          cp app/build/outputs/apk/fossGeckoExcluded/release/*.apk "../../out-lumen/Lumen-$VC.apk"
+          echo "vc=$VC" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        if: steps.check.outputs.ok == 'true' && env.APPS != 'wisp'
+        with:
+          tag_name: lumen-v${{ steps.lumen.outputs.vc }}-b${{ github.run_number }}
+          name: Lumen build ${{ steps.lumen.outputs.vc }}
+          body: Install Lumen-${{ steps.lumen.outputs.vc }}.apk (Lumen can also install it itself from Settings → Version).
+          files: out-lumen/*.apk
+          make_latest: true
+
+      # ---------------- Wisp (phone) ----------------
+      - name: Build Wisp
+        if: steps.check.outputs.ok == 'true' && env.APPS != 'lumen'
+        id: wisp
+        run: |
+          cd src/sofabrowse
+          ./gradlew assembleWispGeckoExcludedRelease
+          VC=$(grep -oE 'val wispVersionCode = [0-9]+' app/build.gradle.kts | head -1 | grep -oE '[0-9]+$')
+          cp app/build/outputs/apk/wispGeckoExcluded/release/*.apk "../../out-wisp/Wisp-$VC.apk"
+          echo "vc=$VC" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        if: steps.check.outputs.ok == 'true' && env.APPS != 'lumen'
+        with:
+          tag_name: wisp-v${{ steps.wisp.outputs.vc }}-b${{ github.run_number }}
+          name: Wisp build ${{ steps.wisp.outputs.vc }}
+          body: Install Wisp-${{ steps.wisp.outputs.vc }}.apk on your phone (Wisp can also install it itself from Settings → Version).
+          files: out-wisp/*.apk
+          make_latest: false
