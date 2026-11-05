@@ -1,0 +1,46 @@
+name: Build Wisp
+# Builds Wisp (the phone browser) from wisp-source.zip and publishes it as a release:
+#   Wisp-<wispVersionCode>.apk  (tag wisp-v…)
+# Upload wisp-source.zip to the repository root to start it, or run it by hand (Actions → Run workflow).
+on:
+  push:
+    paths: ['wisp-source.zip', '.github/workflows/build-wisp.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Is the source zip there?
+        id: check
+        run: |
+          if [ -f wisp-source.zip ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::wisp-source.zip isn't in the repository yet - nothing to build. Upload it to start a build."; fi
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.ok == 'true'
+        with: { java-version: '21', distribution: 'temurin' }
+      - name: Unpack the source
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          unzip -q wisp-source.zip -d src
+          chmod +x src/sofabrowse/gradlew
+          mkdir -p out-wisp
+      - name: Build Wisp
+        if: steps.check.outputs.ok == 'true'
+        id: wisp
+        run: |
+          cd src/sofabrowse
+          ./gradlew assembleWispGeckoExcludedRelease
+          VC=$(grep -oE 'val wispVersionCode = [0-9]+' app/build.gradle.kts | head -1 | grep -oE '[0-9]+$')
+          cp app/build/outputs/apk/wispGeckoExcluded/release/*.apk "../../out-wisp/Wisp-$VC.apk"
+          echo "vc=$VC" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        if: steps.check.outputs.ok == 'true'
+        with:
+          tag_name: wisp-v${{ steps.wisp.outputs.vc }}-b${{ github.run_number }}
+          name: Wisp build ${{ steps.wisp.outputs.vc }}
+          body: Install Wisp-${{ steps.wisp.outputs.vc }}.apk on your phone (Wisp can also install it itself from Settings → About → Check for updates).
+          files: out-wisp/*.apk
+          make_latest: false
