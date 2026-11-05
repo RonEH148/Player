@@ -1,0 +1,40 @@
+name: Build Lumen (TV)
+# Runs when lumen-source.zip is uploaded. Builds ONLY Lumen -> Lumen-<versionCode>.apk.
+on:
+  push:
+    paths: ['lumen-source.zip']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Is the source zip there?
+        id: check
+        run: |
+          if [ -f lumen-source.zip ]; then echo "ok=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::lumen-source.zip isn't in the repository - nothing to build."; fi
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.ok == 'true'
+        with: { java-version: '21', distribution: 'temurin' }
+      - name: Build Lumen
+        if: steps.check.outputs.ok == 'true'
+        id: build
+        run: |
+          unzip -q lumen-source.zip -d src
+          cd src/sofabrowse && chmod +x gradlew
+          ./gradlew assembleFossGeckoExcludedRelease
+          VC=$(grep -oE 'versionCode = [0-9]+' app/build.gradle.kts | head -1 | grep -oE '[0-9]+')
+          mkdir -p ../../out
+          cp app/build/outputs/apk/fossGeckoExcluded/release/*.apk "../../out/Lumen-$VC.apk"
+          echo "vc=$VC" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        if: steps.check.outputs.ok == 'true'
+        with:
+          tag_name: lumen-v${{ steps.build.outputs.vc }}-b${{ github.run_number }}
+          name: Lumen build ${{ steps.build.outputs.vc }}
+          body: Install Lumen-${{ steps.build.outputs.vc }}.apk (Lumen can also install it itself from Settings → Version).
+          files: out/*.apk
+          make_latest: true
