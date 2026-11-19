@@ -28,6 +28,16 @@ jobs:
           java-version: 21
           cache: gradle
 
+      - name: Signing key (from GitHub Secrets)
+        env:
+          KS_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::error::Secret SIGNING_KEYSTORE_B64 is missing"; exit 1; fi
+          echo "$KS_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          cp "$RUNNER_TEMP/release.jks" url.keystore
+          sed -i -E "s/storePassword \"[^\"]*\"/storePassword \"$SIGNING_PASSWORD\"/; s/keyPassword \"[^\"]*\"/keyPassword \"$SIGNING_PASSWORD\"/; s/keyAlias \"[^\"]*\"/keyAlias \"release\"/" app/build.gradle
+
       - name: Build (tablet + TV)
         run: bash tools/ci.sh
 

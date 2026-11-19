@@ -24,6 +24,15 @@ jobs:
           echo "Using $ZIP"
           unzip -o "$ZIP" -d lk
 
+      - name: Signing key (from GitHub Secrets)
+        env:
+          KS_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::error::Secret SIGNING_KEYSTORE_B64 is missing"; exit 1; fi
+          echo "$KS_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          cp "$RUNNER_TEMP/release.jks" lk/lkplus.keystore
+          sed -i -E "s/storePassword \"[^\"]*\"/storePassword \"$SIGNING_PASSWORD\"/; s/keyPassword \"[^\"]*\"/keyPassword \"$SIGNING_PASSWORD\"/; s/keyAlias \"[^\"]*\"/keyAlias \"release\"/" lk/leankeykeyboard/build.gradle
       - name: Version number from the build number (so every build is an update)
         id: ver
         run: |

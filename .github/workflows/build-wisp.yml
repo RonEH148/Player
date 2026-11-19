@@ -27,9 +27,21 @@ jobs:
           unzip -q wisp-source.zip -d src
           chmod +x src/sofabrowse/gradlew
           mkdir -p out-wisp
+      - name: Signing key (from GitHub Secrets)
+        if: steps.check.outputs.ok == 'true'
+        env:
+          KS_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::error::Secret SIGNING_KEYSTORE_B64 is missing"; exit 1; fi
+          echo "$KS_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
       - name: Build Wisp
         if: steps.check.outputs.ok == 'true'
         id: wisp
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          KEY_ALIAS: release
+          KEY_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
           cd src/sofabrowse
           ./gradlew assembleWispGeckoExcludedRelease

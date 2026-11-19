@@ -19,9 +19,21 @@ jobs:
       - uses: actions/setup-java@v4
         if: steps.check.outputs.ok == 'true'
         with: { java-version: '21', distribution: 'temurin' }
+      - name: Signing key (from GitHub Secrets)
+        if: steps.check.outputs.ok == 'true'
+        env:
+          KS_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS_B64" ]; then echo "::error::Secret SIGNING_KEYSTORE_B64 is missing"; exit 1; fi
+          echo "$KS_B64" | base64 --decode > "$RUNNER_TEMP/release.jks"
       - name: Build Lumen
         if: steps.check.outputs.ok == 'true'
         id: build
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          KEY_ALIAS: release
+          KEY_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
           unzip -q lumen-source.zip -d src
           cd src/sofabrowse && chmod +x gradlew
