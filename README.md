@@ -1,3 +1,26 @@
+# Android apps for TV, tablet and phone – Hrishabh Vashisht
+
+This repository is my build hub for four Android apps I maintain. Each one is a modified version of an open-source project, with its own name, app ID and in-app update channel. The APKs are built with **GitHub Actions** and published on the [Releases page](https://github.com/RonEH148/Player/releases).
+
+| App | Based on | Device | What I added | Download |
+|---|---|---|---|---|
+| **Just Player URL** | [Just Player](https://github.com/moneytoo/Player) | Android TV, tablet | Separate TV and tablet builds, own update channel ("Check for updates" in settings), patched media library build | [Releases](https://github.com/RonEH148/Player/releases?q=justplayer-url&expanded=true) |
+| **Lumen** | [TV Bro](https://github.com/truefedex/tv-bro) | Android TV | Stronger ad blocker (EasyList, EasyPrivacy, uBlock), YouTube ad handling, pop-up blocker, helpful error pages, toggles under *Settings → Lumen extras* | [Releases](https://github.com/RonEH148/Player/releases?q=lumen&expanded=true) |
+| **Wisp** | Lumen (same source) | Phone | Phone interface with one slim top bar, bottom-sheet menu, Material You colours, GIF maker; lightweight, no Google Play services | [Releases](https://github.com/RonEH148/Player/releases?q=wisp&expanded=true) |
+| **LeanKeyboard Plus** | [LeanKeyboard](https://github.com/yuliskov/LeanKeyboard) | Android TV | Installs next to the original keyboard, own update channel | [Releases](https://github.com/RonEH148/Player/releases?q=leankey&expanded=true) |
+
+**How it works**
+- One repository, several apps: each app has its own release tag prefix (`justplayer-url-b`, `lumen-v`, `wisp-v`, `leankey-v`), so their releases don't mix.
+- Builds run in GitHub Actions; a release script publishes the APKs and keeps only the newest builds.
+- Every app can update itself from inside the app using these releases.
+
+**Credits and licences:** all apps are based on the open-source projects linked above and keep their original licences. These are personal, non-commercial modifications.
+
+---
+
+<details>
+<summary>Original Just Player README</summary>
+
 # Just (Video) Player 
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/moneytoo/Player.svg?logo=github&label=GitHub&cacheSeconds=3600)](https://github.com/moneytoo/Player/releases/latest)
@@ -171,3 +194,5 @@ Here's a comparison table presenting all available and significant open source v
 | [VLC](https://code.videolan.org/videolan/vlc-android)             | [libVLC](https://www.videolan.org/vlc/libvlc.html)                                                                                                                      |
 
 To find other video players (including non-FOSS), check out [a list on IzzyOnDroid](https://android.izzysoft.de/applists/category/named/multimedia_video_player) or my list of [awesome F-Droid apps](https://github.com/moneytoo/awesome-fdroid).
+
+</details>
