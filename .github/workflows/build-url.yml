@@ -1,4 +1,4 @@
-name: Build Just Player URL
+name: Build Gamma Player
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Apply newest Just Player URL changes
+      - name: Apply newest Gamma Player changes
         run: |
           ZIP=$(ls url-v*.zip | sort -V | tail -1)
           echo "Using $ZIP"
@@ -33,13 +33,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: JustPlayer-URL-Tablet
-          path: out/JustPlayer-URL-Tablet.apk
+          name: GammaPlayer-Tablet
+          path: out/*-Tablet.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: JustPlayer-URL-TV
-          path: out/JustPlayer-URL-TV.apk
+          name: GammaPlayer-TV
+          path: out/*-TV.apk
 
       - name: Publish for in-app updates
         env:
