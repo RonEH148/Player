@@ -9,6 +9,8 @@ This repository is my build hub for four Android apps I maintain. Each one is a 
 | **Wisp** | Lumen (same source) | Phone | Phone interface with one slim top bar, bottom-sheet menu, Material You colours, GIF maker; lightweight, no Google Play services | [Releases](https://github.com/RonEH148/Player/releases?q=wisp&expanded=true) |
 | **LeanKeyboard Plus** | [LeanKeyboard](https://github.com/yuliskov/LeanKeyboard) | Android TV | Installs next to the original keyboard, own update channel | [Releases](https://github.com/RonEH148/Player/releases?q=leankey&expanded=true) |
 
+**Source code and details:** [Lumen](https://github.com/RonEH148/lumen-browser) · [Wisp](https://github.com/RonEH148/wisp-browser) · [LeanKeyboard Plus](https://github.com/RonEH148/leankeyboard-plus)
+
 **How it works**
 - One repository, several apps: each app has its own release tag prefix (`justplayer-url-b`, `lumen-v`, `wisp-v`, `leankey-v`), so their releases don't mix.
 - Builds run in GitHub Actions; a release script publishes the APKs and keeps only the newest builds.
